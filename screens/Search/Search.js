@@ -1,7 +1,12 @@
+import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { SearchBar } from 'react-native-elements';
 import styled from "styled-components";
-import { useNavigation } from "@react-navigation/native";
+import SearchList from '../SearchList';
+import GET_CHANNELS from "../../graphql";
+import { useQuery } from '@apollo/client';
+
+
 
 
 const Containter = styled.View`
@@ -38,7 +43,7 @@ const MyChannelContainer = styled.TouchableOpacity`
     justify-content: center;
 `;
 
-const MyChannelButton = styled.View`
+const MyChannelButton = styled.TouchableOpacity`
     width: 80%;
     height: 26%;
     background-color: black;
@@ -50,18 +55,34 @@ const ButtonImage = styled.Image`
 `;
 
 
+
 export default () => {
     const [keyword, setKeyword] = useState("");
+    const [results, setResults] = useState({
+        channels: [],
+        channelError: null
+    });
+    const onChange = text => setKeyword(text);
     const navigation = useNavigation();
+    const {loading, error, data} = useQuery(GET_CHANNELS);
+    if(loading || error) {
+        return;
+    } else if(data){
+        navigation.navigate("SearchList", {...data});
+    }
+    console.log(data);
     const onSubmit = () => {
         if(keyword === "") {
             return;
-        } else{
-            navigation.navigate("SearchList", [keyword]);
         }
-        
-    }
-    const onChange = text => setKeyword(text);
+        setResults({
+            channels,
+            channelError
+        });
+        if(keyword !== null) {
+            navigation.navigate("SearchList", {keyword, ...results});
+        }
+    };
     return (
         <Containter>
             <Content>
@@ -70,8 +91,9 @@ export default () => {
                 <SearchBar
                     placeholder="채널 이름을 입력해주세요"
                     containerStyle={{backgroundColor: 'black', borderWidth: 1, borderRadius: 5}}
-                    searchIcon
-                    showLoading={true}
+                    returnKeyType="search"
+                    showLoading= {true}
+                    round={true}
                     onChange={onChange}
                     value= { keyword }
                     onChangeText={ value =>setKeyword( value ) }
@@ -83,7 +105,7 @@ export default () => {
                     <ButtonImage source={require("../../images/search_my_ch.png")}/>
                 </MyChannelButton>
             </MyChannelContainer>
-        </Containter>
+        </Containter> 
     );
 
 };
